@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO Chat</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: linear-gradient(to right, #f7f7f7, #dfe9f3);
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 1rem;
+        flex-grow: 1;
+        overflow-y: auto;
+      }
+
+      #messages li {
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 20px;
+        max-width: 60%;
+        word-wrap: break-word;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+
+      #messages li.self {
+        background-color: #4CAF50;
+        color: white;
+        align-self: flex-end;
+        margin-left: auto;
+      }
+
+      #messages li.other {
+        background-color: #2196F3;
+        color: white;
+        align-self: flex-start;
+        margin-right: auto;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      #form {
+        display: flex;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(10px);
+      }
+
+      #input {
+        flex-grow: 1;
+        padding: 10px;
+        border-radius: 20px;
+        border: 1px solid #ccc;
+        margin-right: 10px;
+      }
+
+      button {
+        background: #ff4081;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        color: white;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      button:hover {
+        background: #e91e63;
+      }
+
+      #typing {
+        padding-left: 1rem;
+        color: #555;
+        font-style: italic;
+        height: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <div id="typing"></div>
+    <form id="form" action="">
+      <input id="input" autocomplete="off" placeholder="Type a message..." />
+      <button>Send</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+
+      const messages = document.getElementById('messages');
+      const form = document.getElementById('form');
+      const input = document.getElementById('input');
+      const typingNotice = document.getElementById('typing');
+
+      let nickname = prompt("Enter your nickname:");
+      if (!nickname) nickname = "Anonymous";
+      socket.emit('set nickname', nickname);
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (input.value) {
+          socket.emit('chat message', { name: nickname, text: input.value });
+          addMessage(nickname, input.value); 
+          input.value = '';
+        }
+      });
+
+      input.addEventListener('input', function () {
+        socket.emit('typing', nickname + ' is typing...');
+      });
+
+      socket.on('chat message', function (data) {
+        if (data.name !== nickname) {
+          addMessage(data.name, data.text);
+        }
+        typingNotice.textContent = '';
+      });
+
+      socket.on('typing', function (msg) {
+        typingNotice.textContent = msg;
+      });
+
+      function addMessage(sender, text) {
+        const item = document.createElement('li');
+        item.textContent = sender + ': ' + text;
+        item.className = (sender === nickname) ? 'self' : 'other';
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+      }
+    </script>
+  </body>
+</html>
