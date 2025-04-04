@@ -9,6 +9,10 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/messages', async function(req, res){
+  res.json(await messageModel.find());
+});
+
 app.use(express.static(__dirname + '/public'));
 
 io.on('connection', (socket) => {
